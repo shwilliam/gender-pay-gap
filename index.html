@@ -61,12 +61,16 @@
       transition: opacity .3s;
     }
     .legend:hover {
-      opacity:1;
+      opacity: 1 !important;
       cursor: pointer;
     }
     .show-all {
       transition: opacity .3s;
       font-weight: 600;
+      pointer-events: none;
+    }
+    .show-all:hover {
+      cursor: pointer;
     }
     span.man,
     span.woman {
@@ -253,8 +257,13 @@
           .style('text-anchor', 'end')
           .text(d => d)
 
-        legend.on('click', (type) => {
-          showAll.attr('opacity', .8)
+        legend.on('click', function(type) {
+          d3.selectAll('.legend')
+            .style('opacity', .5)
+          d3.select(this).style('opacity', 1)
+          showAll
+            .style('opacity', .8)
+            .style('pointer-events', 'all')
           d3.selectAll('circle')
             .classed('hidden', true)
             .classed('highlighted', false)
@@ -282,11 +291,14 @@
           .attr('y', 205)
           .attr('dy', '.35em')
           .style('text-anchor', 'end')
-          .attr('opacity', 0)
+          .style('opacity', 0)
           .text('show all')
           
         showAll.on('click', () => {
-          showAll.attr('opacity', 0)
+          legend.style('opacity', .5)
+          showAll
+            .style('opacity', 0)
+            .style('pointer-events', 'none')
           d3.selectAll('circle')
             .classed('hidden', false)
             .classed('highlighted', false)  
