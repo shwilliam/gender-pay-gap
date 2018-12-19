@@ -4,13 +4,25 @@
   <meta charset='UTF-8'>
   <title>US Gender Pay Gap</title>
   <style type='text/css'>
+    html:hover {
+      cursor: crosshair;
+    }
     body{
       margin: 10px;
       font-family: sans-serif;
       font-size: 14px;
     }
     circle.node {
-      opacity: 0.8;
+      opacity: 0.7;
+      transition: opacity 0.3s;
+    }
+    circle.highlighted {
+      opacity: 1 !important;
+    }
+    circle.hidden {
+      display: none;
+    }
+    .tooltip {
       transition: opacity 0.3s;
     }
     .x-axis,
@@ -25,6 +37,9 @@
     .legend:hover {
       opacity:1;
       cursor: pointer;
+    }
+    .show-all {
+      transition: opacity 0.3s;
     }
 	</style>
 	<script type='text/javascript' src='https://d3js.org/d3.v4.min.js'></script>
@@ -48,8 +63,8 @@
     const radiusScale = d3.scaleLinear().range([1, 30])
     const colorScale = d3.scaleOrdinal(d3.schemeCategory20)
       
-    const xAxis = d3.axisBottom().scale(xScale).ticks(20, "s")
-    const yAxis = d3.axisLeft().scale(yScale).ticks(20, "s")
+    const xAxis = d3.axisBottom().scale(xScale).ticks(20, 's')
+    const yAxis = d3.axisLeft().scale(yScale).ticks(20, 's')
 
     const domainColumn = 'Men average annual salary ($)'
     const rangeColumn = 'Women average annual salary ($)'
@@ -77,10 +92,12 @@
         .attr('transform', 'translate(0,0)')
         .attr('class', 'y-axis')        
         .call(yAxis)
-            
-      d3.select('body')
-        .append('div')
-        .attr('id', 'tooltip')
+
+      const tooltip = d3.select('body')
+        .append('span')
+        .attr('class', 'tooltip')
+        .style('position', 'absolute')
+        .style('opacity', 0)
       
       const node = svg.selectAll('circle')
         .data(data)
@@ -90,6 +107,22 @@
         .attr('r', d => radiusScale(d[radiusColumn]))
         .style('fill', d => colorScale(d.Category))
         .attr('class', 'node')
+        .on('mouseover', function(d) {
+          d3.select(this)
+            .style('opacity', 1)
+            .append('text')
+          tooltip
+            .text(d.Occupation)
+            .style('opacity', 0.9)
+            .style('left', (d3.event.pageX) + 'px')
+            .style('top', (d3.event.pageY - 30) + 'px')
+        })
+        .on('mouseout', function(d) {
+          d3.select(this)
+            .style('opacity', 0.7)
+          tooltip
+            .style('opacity', 0)
+        })
 
       svg.append('text')
       	.attr('x', 10)
@@ -122,12 +155,15 @@
         .attr('dy', '.35em')
         .style('text-anchor', 'end')
         .text(d => d)
-        
+
       legend.on('click', (type) => {
+        showAll.attr('opacity', 0.8)
         d3.selectAll('circle')
-          .style('opacity', 0)
+          .classed('hidden', true)
+          .classed('highlighted', false)
           .filter(d => d.Category == type)
-          .style('opacity', 1)
+          .classed('hidden', false)
+          .classed('highlighted', true)    
       })
 
       legend.on('mouseover', (type) => {
@@ -138,7 +174,25 @@
       
       legend.on('mouseout', (type) => {
         d3.selectAll('circle')
-          .style('opacity', 0.8)
+          .style('opacity', 0.7)
+      })
+        
+      const showAll = d3.select('svg')
+        .append('g')
+        .append('text')
+        .attr('class', 'show-all')        
+        .attr('x', width + 56)
+        .attr('y', 205)
+        .attr('dy', '.35em')
+        .style('text-anchor', 'end')
+        .attr('opacity', 0)
+        .text('show all')
+        
+      showAll.on('click', () => {
+        showAll.attr('opacity', 0)
+        d3.selectAll('circle')
+          .classed('hidden', false)
+          .classed('highlighted', false)  
       })
     })
   </script>
