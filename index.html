@@ -39,9 +39,15 @@
     circle.highlighted:hover {
       opacity: 1 !important;
     }
+    circle.muted {
+      opacity: 0.1 !important;
+    }
     circle.hidden {
       opacity: 0 !important;
       pointer-events: none;
+    }
+    circle.muted:hover {
+      opacity: 1 !important;
     }
     b {
       font-size: 22px;
@@ -50,6 +56,9 @@
     .tooltip {
       line-height: 20px;
       transition: opacity .5s;
+    }
+    .tooltip.hold {
+      opacity: 1 !important;   
     }
     .x-axis,
     .y-axis {
@@ -114,7 +123,7 @@
       d3.select('html').style('pointer-events', 'none')
       window.setTimeout(() => {
         d3.select('html').style('pointer-events', 'all')      
-      }, 2500);
+      }, 2500)
     
       let windowWith = window.innerWidth > 500 ? window.innerWidth : 500
 
@@ -184,6 +193,7 @@
           .attr('class', 'y-axis')        
           .call(yAxis)
 
+        let tooltipFrozen = false
         const tooltip = d3.select('body')
           .append('span')
           .attr('class', 'tooltip')
@@ -210,7 +220,8 @@
             d3.select(this)
               .style('opacity', 1)
               .append('text')
-            tooltip
+            !tooltipFrozen && tooltip
+              .classed('hold', false)
               .html(`<b>${d.Occupation}</b><br />
                 <span class='percentage'>${d[radiusColumn]}%</span><br />
                 <span class='man'>$${d[domainColumn].toLocaleString()}</span>&nbsp;
@@ -223,6 +234,29 @@
               .style('opacity', .7)
             tooltip
               .style('opacity', 0)
+          })
+          .on('click', (node) => {
+            tooltipFrozen = true
+            window.setTimeout(() => {
+              tooltipFrozen = false     
+            }, 1500)
+            d3.selectAll('.legend')
+              .style('opacity', .5)
+              .filter(d => d == node.Category)
+              .style('opacity', 1)
+            d3.selectAll('circle')
+              .classed('muted', true)
+              .classed('highlighted', false)
+              .filter(d => d.Category == node.Category)
+              .classed('muted', false)
+              .classed('highlighted', true)
+            tooltip
+              .html(`<b>${node.Occupation}</b><br />
+                <span class='percentage'>${node[radiusColumn]}%</span><br />
+                <span class='man'>$${node[domainColumn].toLocaleString()}</span>&nbsp;
+                <span class='woman'>$${node[rangeColumn].toLocaleString()}</span>
+              `)
+              .classed('hold', true)
           })
 
         svg.append('text')
@@ -265,6 +299,7 @@
             .style('opacity', .8)
             .style('pointer-events', 'all')
           d3.selectAll('circle')
+            .classed('muted', false)
             .classed('hidden', true)
             .classed('highlighted', false)
             .filter(d => d.Category == type)
