@@ -92,7 +92,7 @@
       background-size: auto auto;
       background-origin: padding-box;
       background-clip: border-box;
-      margin: 0 5px;
+      margin: 0 7px;
     }
     span.man {
       background: linear-gradient(to bottom,transparent 0,transparent 60%,lightblue 60%,lightblue 100%);
@@ -147,7 +147,7 @@
         
       const xScale = d3.scaleLinear().range([0, width])
       const yScale = d3.scaleLinear().range([height, 0])
-      const radiusScale = d3.scaleLinear().range([1, 30])
+      const radiusScale = d3.scaleLinear().range([2, 30])
       const colorScale = d3.scaleOrdinal(d3.schemeCategory20)
         
       const xAxis = d3.axisBottom().scale(xScale).ticks(20, 's')
@@ -179,7 +179,7 @@
         data.forEach((d) => {
           d[domainColumn] = +d[domainColumn]
           d[rangeColumn] = +d[rangeColumn]
-          d[radiusColumn] = +d[radiusColumn]  // differentiate negative diff
+          d[radiusColumn] = +Math.abs(d[radiusColumn])  // differentiate negative diff
         })
 
         xScale.domain(d3.extent(data, (d) => d[domainColumn])).nice()
@@ -209,6 +209,20 @@
           .attr('class', 'y-axis')        
           .call(yAxis)
 
+        const yLabel = svg.append('text')
+          .attr('x', 10)
+          .attr('y', 10)
+          .attr('alignment-baseline', 'middle')
+          .attr('class', 'y-label')        
+          .text('👩')
+
+        const xLabel = svg.append('text')
+          .attr('x', width)
+          .attr('y', height - 10)
+          .attr('text-anchor', 'middle')
+          .attr('class', 'x-label')        
+          .text('👨')
+
         let tooltipFrozen = false
         const tooltip = d3.select('body')
           .append('span')
@@ -231,19 +245,26 @@
           .attr('class', 'node')
         
         node.on('mouseover', function(d) {
-            d3.selectAll('circle')
-              .style('opacity', .3)
-            d3.select(this)
-              .style('opacity', 1)
-              .append('text')
-            !tooltipFrozen && tooltip
-              .classed('hold', false)
-              .html(`<b>${d.Occupation}</b><br />
-                <span class='percentage'>${d[radiusColumn]}%</span><br />
-                <span class='man'>$${d[domainColumn].toLocaleString()}</span>&nbsp;
-                <span class='woman'>$${d[rangeColumn].toLocaleString()}</span>
-              `)
-              .style('opacity', .9)          
+          !tooltipFrozen && xLabel
+            .transition()
+            .attr('x', xScale(d[domainColumn]))
+          !tooltipFrozen && yLabel
+            .transition()
+            .attr('y', yScale(d[rangeColumn]))
+          d3.selectAll('circle')
+            .style('opacity', .3)
+          d3.select(this)
+            .style('opacity', 1)
+            .append('text')
+          !tooltipFrozen && tooltip
+            .classed('hold', false)
+            .html(`<b>${d.Occupation}</b><br />
+              <span class='percentage'>${d[radiusColumn]}%</span>
+              ${d[radiusColumn] >= 0 ? 'less' : 'more'}<br />
+              <span class='man'>$${d[domainColumn].toLocaleString()}</span>&nbsp;
+              <span class='woman'>$${d[rangeColumn].toLocaleString()}</span>
+            `)
+            .style('opacity', .9)          
           })
           .on('mouseout', (d) => {
             d3.selectAll('circle')
@@ -268,25 +289,13 @@
               .classed('highlighted', true)
             tooltip
               .html(`<b>${node.Occupation}</b><br />
-                <span class='percentage'>${node[radiusColumn]}%</span><br />
+                <span class='percentage'>${node[radiusColumn]}%</span>
+                ${node[radiusColumn] >= 0 ? 'less' : 'more'}<br />
                 <span class='man'>$${node[domainColumn].toLocaleString()}</span>&nbsp;
                 <span class='woman'>$${node[rangeColumn].toLocaleString()}</span>
               `)
               .classed('hold', true)
           })
-
-        svg.append('text')
-          .attr('x', 10)
-          .attr('y', 10)
-          .attr('class', 'y-label')        
-          .text('👩')
-
-        svg.append('text')
-          .attr('x', width)
-          .attr('y', height - 10)
-          .attr('text-anchor', 'end')
-          .attr('class', 'x-label')        
-          .text('👨')
 
         const legend = svg.selectAll('.legend')
           .data(colorScale.domain())
