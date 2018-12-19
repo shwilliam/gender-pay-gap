@@ -83,6 +83,14 @@
       yScale.domain(d3.extent(data, (d) => d[rangeColumn])).nice()
       radiusScale.domain(d3.extent(data, (d) => d[radiusColumn])).nice()
       
+      const ideal = svg.append('line')
+        .style('stroke', 'black')
+        .style('opacity', 0.2)
+        .attr('x1', () => xScale(17000))      
+        .attr('y1', () => yScale(17000))
+        .attr('x2', () => xScale(92000))
+        .attr('y2', () => yScale(92000))
+    
       svg.append('g')
         .attr('transform', `translate(0,${height})`)
         .attr('class', 'x-axis')     
