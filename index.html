@@ -7,7 +7,6 @@
     html {
       opacity: 0;
       transition: opacity 2s;
-      pointer-events: none;
     }
     html:hover {
       cursor: crosshair;
@@ -102,186 +101,206 @@
 <body>
   <script type='text/javascript'>
     d3.select('html').style('opacity', 1)
-    window.setTimeout(() => {
-      d3.select('html').style('pointer-events', 'all')      
-    }, 2500);
     
     d3.select('body')
       .append('h1').text('Gender Pay Gap')
       .append('h2').text('in the United States')
     
-    const windowWith = window.innerWidth > 500 ? window.innerWidth : 500
+    const draw = () => {
+      d3.select('html').style('pointer-events', 'none')
+      window.setTimeout(() => {
+        d3.select('html').style('pointer-events', 'all')      
+      }, 2500);
     
-    const margin = {top: 30, right: 50, bottom: 40, left:40}
-    const width = windowWith - margin.left - margin.right - 12
-    const height = 500 - margin.top - margin.bottom
-    
-    const svg = d3.select('body').append('svg')
-      .attr('width', width + margin.left + margin.right)
-      .attr('height', height + margin.top + margin.bottom)
-      .append('g')
-      .attr('transform', `translate(${margin.left},${margin.top})`)
+      let windowWith = window.innerWidth > 500 ? window.innerWidth : 500
+
+      d3.select('html')
+        .style('max-width', 'none')
+        .style('overflow-x', 'inherit')
+
+      if (windowWith > 500) d3.select('html')
+        .style('max-width', '100%')
+        .style('overflow-x', 'hidden')
+
+      const margin = {top: 30, right: 50, bottom: 40, left:40}
+      const width = windowWith - margin.left - margin.right - 12
+      const height = 500 - margin.top - margin.bottom
       
-    const xScale = d3.scaleLinear().range([0, width])
-    const yScale = d3.scaleLinear().range([height, 0])
-    const radiusScale = d3.scaleLinear().range([1, 30])
-    const colorScale = d3.scaleOrdinal(d3.schemeCategory20)
-      
-    const xAxis = d3.axisBottom().scale(xScale).ticks(20, 's')
-    const yAxis = d3.axisLeft().scale(yScale).ticks(20, 's')
-
-    const domainColumn = 'Men average annual salary ($)'
-    const rangeColumn = 'Women average annual salary ($)'
-    const radiusColumn = 'Pay gap as a percentage'
-
-    d3.csv('us_gender_pay_gap.csv', (error, data) => {
-      if (error) console.error('hmmm....')
-
-      data.forEach((d) => {
-        d[domainColumn] = +d[domainColumn]
-        d[rangeColumn] = +d[rangeColumn]
-        d[radiusColumn] = +d[radiusColumn]  // differentiate negative diff
-      })
-
-      xScale.domain(d3.extent(data, (d) => d[domainColumn])).nice()
-      yScale.domain(d3.extent(data, (d) => d[rangeColumn])).nice()
-      radiusScale.domain(d3.extent(data, (d) => d[radiusColumn])).nice()
-      
-      const ideal = svg.append('line')
-        .style('stroke', 'black')
-        .attr('x1', () => xScale(17000))      
-        .attr('y1', () => yScale(17000))
-        .attr('x2', () => xScale(17000))
-        .attr('y2', () => yScale(17000))
-        .style('opacity', 0.2)
-        .transition().duration(2000)
-        .attr('x1', () => xScale(17000))      
-        .attr('y1', () => yScale(17000))
-        .attr('x2', () => xScale(92000))
-        .attr('y2', () => yScale(92000))
-    
-      svg.append('g')
-        .attr('transform', `translate(0,${height})`)
-        .attr('class', 'x-axis')     
-        .call(xAxis)
-
-      svg.append('g')
-        .attr('transform', 'translate(0,0)')
-        .attr('class', 'y-axis')        
-        .call(yAxis)
-
-      const tooltip = d3.select('body')
-        .append('span')
-        .attr('class', 'tooltip')
-        .style('position', 'absolute')
-        .style('left', '160px')
-        .style('top', '180px')
-        .style('opacity', 0)
-      
-      const node = svg.selectAll('circle')
-        .data(data)
-        .enter().append('circle')
+      const svg = d3.select('body').append('svg')
+        .attr('width', width + margin.left + margin.right)
+        .attr('height', height + margin.top + margin.bottom)
+        .append('g')
+        .attr('transform', `translate(${margin.left},${margin.top})`)
         
-      node.attr('cx', d => xScale(d[domainColumn]))
-        .attr('cy', d => yScale(d[rangeColumn]))
-        .style('fill', d => colorScale(d.Category))
-        .attr('r', () => radiusScale(-20))
-        .transition().duration(2500)
-        .attr('r', d => radiusScale(d[radiusColumn]))
-        .attr('class', 'node')
-      
-      node.on('mouseover', function(d) {
-          d3.selectAll('circle')
-            .style('opacity', .3)
-          d3.select(this)
-            .style('opacity', 1)
-            .append('text')
-          tooltip
-            .html(`<b>${d.Occupation}</b><br />
-              <span class='percentage'>${d[radiusColumn]}%</span><br />
-              <span class='man'>$${d[domainColumn].toLocaleString()}</span>&nbsp;
-              <span class='woman'>$${d[rangeColumn].toLocaleString()}</span>
-            `)
-            .style('opacity', .9)          
+      const xScale = d3.scaleLinear().range([0, width])
+      const yScale = d3.scaleLinear().range([height, 0])
+      const radiusScale = d3.scaleLinear().range([1, 30])
+      const colorScale = d3.scaleOrdinal(d3.schemeCategory20)
+        
+      const xAxis = d3.axisBottom().scale(xScale).ticks(20, 's')
+      const yAxis = d3.axisLeft().scale(yScale).ticks(20, 's')
+
+      const domainColumn = 'Men average annual salary ($)'
+      const rangeColumn = 'Women average annual salary ($)'
+      const radiusColumn = 'Pay gap as a percentage'
+
+      d3.csv('us_gender_pay_gap.csv', (error, data) => {
+        if (error) console.error('hmmm....')
+
+        data.forEach((d) => {
+          d[domainColumn] = +d[domainColumn]
+          d[rangeColumn] = +d[rangeColumn]
+          d[radiusColumn] = +d[radiusColumn]  // differentiate negative diff
         })
-        .on('mouseout', (d) => {
+
+        xScale.domain(d3.extent(data, (d) => d[domainColumn])).nice()
+        yScale.domain(d3.extent(data, (d) => d[rangeColumn])).nice()
+        radiusScale.domain(d3.extent(data, (d) => d[radiusColumn])).nice()
+        
+        const ideal = svg.append('line')
+          .style('stroke', 'black')
+          .attr('x1', () => xScale(17000))      
+          .attr('y1', () => yScale(17000))
+          .attr('x2', () => xScale(17000))
+          .attr('y2', () => yScale(17000))
+          .style('opacity', 0.2)
+          .transition().duration(2000)
+          .attr('x1', () => xScale(17000))      
+          .attr('y1', () => yScale(17000))
+          .attr('x2', () => xScale(92000))
+          .attr('y2', () => yScale(92000))
+      
+        svg.append('g')
+          .attr('transform', `translate(0,${height})`)
+          .attr('class', 'x-axis')     
+          .call(xAxis)
+
+        svg.append('g')
+          .attr('transform', 'translate(0,0)')
+          .attr('class', 'y-axis')        
+          .call(yAxis)
+
+        const tooltip = d3.select('body')
+          .append('span')
+          .attr('class', 'tooltip')
+          .style('position', 'absolute')
+          .style('left', '22%')
+          .style('top', '180px')
+          .style('opacity', 0)
+        
+        const node = svg.selectAll('circle')
+          .data(data)
+          .enter().append('circle')
+          
+        node.attr('cx', d => xScale(d[domainColumn]))
+          .attr('cy', d => yScale(d[rangeColumn]))
+          .style('fill', d => colorScale(d.Category))
+          .attr('r', () => radiusScale(-20))
+          .transition().duration(2500)
+          .attr('r', d => radiusScale(d[radiusColumn]))
+          .attr('class', 'node')
+        
+        node.on('mouseover', function(d) {
+            d3.selectAll('circle')
+              .style('opacity', .3)
+            d3.select(this)
+              .style('opacity', 1)
+              .append('text')
+            tooltip
+              .html(`<b>${d.Occupation}</b><br />
+                <span class='percentage'>${d[radiusColumn]}%</span><br />
+                <span class='man'>$${d[domainColumn].toLocaleString()}</span>&nbsp;
+                <span class='woman'>$${d[rangeColumn].toLocaleString()}</span>
+              `)
+              .style('opacity', .9)          
+          })
+          .on('mouseout', (d) => {
+            d3.selectAll('circle')
+              .style('opacity', .7)
+            tooltip
+              .style('opacity', 0)
+          })
+
+        svg.append('text')
+          .attr('x', 10)
+          .attr('y', 10)
+          .attr('class', 'y-label')        
+          .text('👩')
+
+        svg.append('text')
+          .attr('x', width)
+          .attr('y', height - 10)
+          .attr('text-anchor', 'end')
+          .attr('class', 'x-label')        
+          .text('👨')
+
+        const legend = svg.selectAll('.legend')
+          .data(colorScale.domain())
+          .enter().append('g')
+          .attr('transform', (d,i) => `translate(0,${i * 20})`)
+          .attr('class', 'legend')        
+
+        legend.append('rect')
+          .attr('x', width)
+          .attr('width', 18)
+          .attr('height', 18)
+          .style('fill', colorScale)
+
+        legend.append('text')
+          .attr('x', width - 6)
+          .attr('y', 9)
+          .attr('dy', '.35em')
+          .style('text-anchor', 'end')
+          .text(d => d)
+
+        legend.on('click', (type) => {
+          showAll.attr('opacity', .8)
+          d3.selectAll('circle')
+            .classed('hidden', true)
+            .classed('highlighted', false)
+            .filter(d => d.Category == type)
+            .classed('hidden', false)
+            .classed('highlighted', true)    
+        })
+
+        legend.on('mouseover', (type) => {
+          d3.selectAll('circle')
+            .filter(d => d.Category !== type)
+            .style('opacity', .15)
+        })
+        
+        legend.on('mouseout', (type) => {
           d3.selectAll('circle')
             .style('opacity', .7)
-          tooltip
-            .style('opacity', 0)
         })
-
-      svg.append('text')
-      	.attr('x', 10)
-      	.attr('y', 10)
-        .attr('class', 'y-label')        
-      	.text('👩')
-
-      svg.append('text')
-        .attr('x', width)
-        .attr('y', height - 10)
-        .attr('text-anchor', 'end')
-        .attr('class', 'x-label')        
-        .text('👨')
-
-      const legend = svg.selectAll('.legend')
-        .data(colorScale.domain())
-        .enter().append('g')
-        .attr('transform', (d,i) => `translate(0,${i * 20})`)
-        .attr('class', 'legend')        
-
-      legend.append('rect')
-        .attr('x', width)
-        .attr('width', 18)
-        .attr('height', 18)
-        .style('fill', colorScale)
-
-      legend.append('text')
-        .attr('x', width - 6)
-        .attr('y', 9)
-        .attr('dy', '.35em')
-        .style('text-anchor', 'end')
-        .text(d => d)
-
-      legend.on('click', (type) => {
-        showAll.attr('opacity', .8)
-        d3.selectAll('circle')
-          .classed('hidden', true)
-          .classed('highlighted', false)
-          .filter(d => d.Category == type)
-          .classed('hidden', false)
-          .classed('highlighted', true)    
+          
+        const showAll = d3.select('svg')
+          .append('g')
+          .append('text')
+          .attr('class', 'show-all')        
+          .attr('x', width + 56)
+          .attr('y', 205)
+          .attr('dy', '.35em')
+          .style('text-anchor', 'end')
+          .attr('opacity', 0)
+          .text('show all')
+          
+        showAll.on('click', () => {
+          showAll.attr('opacity', 0)
+          d3.selectAll('circle')
+            .classed('hidden', false)
+            .classed('highlighted', false)  
+        })
       })
+    }
+    
+    window.addEventListener('resize', () => {
+      d3.select('svg').remove()
+      d3.select('.tooltip').remove()      
+      draw()
+    }, true)
 
-      legend.on('mouseover', (type) => {
-        d3.selectAll('circle')
-          .filter(d => d.Category !== type)
-          .style('opacity', .15)
-      })
-      
-      legend.on('mouseout', (type) => {
-        d3.selectAll('circle')
-          .style('opacity', .7)
-      })
-        
-      const showAll = d3.select('svg')
-        .append('g')
-        .append('text')
-        .attr('class', 'show-all')        
-        .attr('x', width + 56)
-        .attr('y', 205)
-        .attr('dy', '.35em')
-        .style('text-anchor', 'end')
-        .attr('opacity', 0)
-        .text('show all')
-        
-      showAll.on('click', () => {
-        showAll.attr('opacity', 0)
-        d3.selectAll('circle')
-          .classed('hidden', false)
-          .classed('highlighted', false)  
-      })
-    })
+    draw()
   </script>
 </body>
 </html>
