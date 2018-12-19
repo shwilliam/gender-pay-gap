@@ -156,9 +156,25 @@
       const domainColumn = 'Men average annual salary ($)'
       const rangeColumn = 'Women average annual salary ($)'
       const radiusColumn = 'Pay gap as a percentage'
+      const categories = [
+        'Admin & organisation',
+        'Care & education',
+        'Creative & media',
+        'Law & justice',
+        'Manual Work',
+        'Sales & serving others',
+        'Science, tech & engineering',
+        'Senior managers & execs',
+      ]
 
       d3.csv('us_gender_pay_gap.csv', (error, data) => {
         if (error) console.error('hmmm....')
+
+        const summaryPoints = []
+        data = data.filter(entry => {
+          if (categories.indexOf(entry.Occupation) !== -1) summaryPoints.push(entry)
+          return categories.indexOf(entry.Occupation) === -1
+        })
 
         data.forEach((d) => {
           d[domainColumn] = +d[domainColumn]
