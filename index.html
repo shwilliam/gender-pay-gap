@@ -4,11 +4,143 @@
   <meta charset='UTF-8'>
   <title>US Gender Pay Gap</title>
   <style type='text/css'>
+    body{
+      margin: 10px;
+      font-family: sans-serif;
+      font-size: 14px;
+    }
+    circle.node {
+      opacity: 0.8;
+      transition: opacity 0.3s;
+    }
+    .x-axis,
+    .y-axis {
+      stroke-width: 0.5px;
+      opacity: 0.5;
+    }
+    .legend {
+      opacity: .5;
+      transition: opacity 0.3s;
+    }
+    .legend:hover {
+      opacity:1;
+      cursor: pointer;
+    }
 	</style>
 	<script type='text/javascript' src='https://d3js.org/d3.v4.min.js'></script>
 </head>
 <body>  
   <script type='text/javascript'>
+    const windowWith = window.innerWidth > 500 ? window.innerWidth : 500
+    
+    const margin = {top: 30, right: 50, bottom: 40, left:40}
+    const width = windowWith - margin.left - margin.right - 12
+    const height = 500 - margin.top - margin.bottom
+    
+    const svg = d3.select('body').append('svg')
+      .attr('width', width + margin.left + margin.right)
+      .attr('height', height + margin.top + margin.bottom)
+      .append('g')
+      .attr('transform', `translate(${margin.left},${margin.top})`)
+    
+    const xScale = d3.scaleLinear().range([0, width])
+    const yScale = d3.scaleLinear().range([height, 0])
+    const radiusScale = d3.scaleLinear().range([1, 30])
+    const colorScale = d3.scaleOrdinal(d3.schemeCategory20)
+      
+    const xAxis = d3.axisBottom().scale(xScale).ticks(20, "s")
+    const yAxis = d3.axisLeft().scale(yScale).ticks(20, "s")
+
+    const domainColumn = 'Men average annual salary ($)'
+    const rangeColumn = 'Women average annual salary ($)'
+    const radiusColumn = 'Pay gap as a percentage'
+      
+    d3.csv('us_gender_pay_gap.csv', (error, data) => {
+      if (error) console.error('hmmm....')
+      
+      data.forEach((d) => {
+        d[domainColumn] = +d[domainColumn]
+        d[rangeColumn] = +d[rangeColumn]
+        d[radiusColumn] = +d[radiusColumn]  // differentiate negative diff
+      })
+
+      xScale.domain(d3.extent(data, (d) => d[domainColumn])).nice()
+      yScale.domain(d3.extent(data, (d) => d[rangeColumn])).nice()
+      radiusScale.domain(d3.extent(data, (d) => d[radiusColumn])).nice()
+      
+      svg.append('g')
+        .attr('transform', `translate(0,${height})`)
+        .attr('class', 'x-axis')     
+        .call(xAxis)
+
+      svg.append('g')
+        .attr('transform', 'translate(0,0)')
+        .attr('class', 'y-axis')        
+        .call(yAxis)
+            
+      d3.select('body')
+        .append('div')
+        .attr('id', 'tooltip')
+      
+      const node = svg.selectAll('circle')
+        .data(data)
+        .enter().append('circle')
+        .attr('cx', d => xScale(d[domainColumn]))
+        .attr('cy', d => yScale(d[rangeColumn]))
+        .attr('r', d => radiusScale(d[radiusColumn]))
+        .style('fill', d => colorScale(d.Category))
+        .attr('class', 'node')
+
+      svg.append('text')
+      	.attr('x', 10)
+      	.attr('y', 10)
+        .attr('class', 'y-label')        
+      	.text('👩')
+
+      svg.append('text')
+        .attr('x', width)
+        .attr('y', height - 10)
+        .attr('text-anchor', 'end')
+        .attr('class', 'x-label')        
+        .text('👨')
+
+      const legend = svg.selectAll('.legend')
+        .data(colorScale.domain())
+        .enter().append('g')
+        .attr('transform', (d,i) => `translate(0,${i * 20})`)
+        .attr('class', 'legend')        
+
+      legend.append('rect')
+        .attr('x', width)
+        .attr('width', 18)
+        .attr('height', 18)
+        .style('fill', colorScale)
+
+      legend.append('text')
+        .attr('x', width - 6)
+        .attr('y', 9)
+        .attr('dy', '.35em')
+        .style('text-anchor', 'end')
+        .text(d => d)
+        
+      legend.on('click', (type) => {
+        d3.selectAll('circle')
+          .style('opacity', 0)
+          .filter(d => d.Category == type)
+          .style('opacity', 1)
+      })
+
+      legend.on('mouseover', (type) => {
+        d3.selectAll('circle')
+          .filter(d => d.Category !== type)
+          .style('opacity', 0.15)
+      })
+      
+      legend.on('mouseout', (type) => {
+        d3.selectAll('circle')
+          .style('opacity', 0.8)
+      })
+    })
   </script>
 </body>
 </html>
