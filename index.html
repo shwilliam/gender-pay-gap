@@ -4,6 +4,11 @@
   <meta charset='UTF-8'>
   <title>US Gender Pay Gap</title>
   <style type='text/css'>
+    html {
+      opacity: 0;
+      transition: opacity 2s;
+      pointer-events: none;
+    }
     html:hover {
       cursor: crosshair;
     }
@@ -11,41 +16,100 @@
       margin: 10px;
       font-family: sans-serif;
       font-size: 14px;
+      color: #333;
+    }
+    h1, h2 {
+      text-align: center;
+      color: #222;
+      line-height: 10px;
+    }
+    h1 {
+      font-weight: 400;
+    }
+    h2 {
+      font-size: 18px;
+      font-weight: 200;      
     }
     circle.node {
-      opacity: 0.7;
-      transition: opacity 0.3s;
+      opacity: .7;
+      transition: opacity .7s;
     }
     circle.highlighted {
+      opacity: 0.8 !important;
+    }
+    circle.highlighted:hover {
       opacity: 1 !important;
     }
     circle.hidden {
-      display: none;
+      opacity: 0 !important;
+      pointer-events: none;
+    }
+    b {
+      font-size: 22px;
+      color: #222;
     }
     .tooltip {
-      transition: opacity 0.3s;
+      line-height: 20px;
+      transition: opacity .5s;
     }
     .x-axis,
     .y-axis {
-      stroke-width: 0.5px;
-      opacity: 0.5;
+      stroke-width: .5px;
+      opacity: .5;
     }
     .legend {
       opacity: .5;
-      transition: opacity 0.3s;
+      transition: opacity .3s;
     }
     .legend:hover {
       opacity:1;
       cursor: pointer;
     }
     .show-all {
-      transition: opacity 0.3s;
+      transition: opacity .3s;
+      font-weight: 600;
+    }
+    span.man,
+    span.woman {
+      font-weight: inherit;
+      background-color: rgba(0, 0, 0, 0);
+      background-position-x: 0%;
+      background-position-y: 0%;
+      background-repeat: repeat;
+      background-attachment: scroll;
+      background-size: auto auto;
+      background-origin: padding-box;
+      background-clip: border-box;
+      margin: 0 5px;
+    }
+    span.man {
+      background: linear-gradient(to bottom,transparent 0,transparent 60%,lightblue 60%,lightblue 100%);
+      background-image: linear-gradient(transparent 0px, transparent 60%, lightblue 60%, lightblue 100%);
+    }
+    span.woman {
+      background: linear-gradient(to bottom,transparent 0,transparent 60%,lightpink 60%,lightpink 100%);
+      background-image: linear-gradient(transparent 0px, transparent 60%, lightpink 60%, lightpink 100%);      
+    }
+    span.percentage {
+      font-size: 42px;
+      line-height: 40px;
+      color: #333;
+      transition: opacity 2s;
     }
 	</style>
 	<script type='text/javascript' src='https://d3js.org/d3.v4.min.js'></script>
 </head>
-<body>  
+<body>
   <script type='text/javascript'>
+    d3.select('html').style('opacity', 1)
+    window.setTimeout(() => {
+      d3.select('html').style('pointer-events', 'all')      
+    }, 2500);
+    
+    d3.select('body')
+      .append('h1').text('Gender Pay Gap')
+      .append('h2').text('in the United States')
+    
     const windowWith = window.innerWidth > 500 ? window.innerWidth : 500
     
     const margin = {top: 30, right: 50, bottom: 40, left:40}
@@ -57,7 +121,7 @@
       .attr('height', height + margin.top + margin.bottom)
       .append('g')
       .attr('transform', `translate(${margin.left},${margin.top})`)
-    
+      
     const xScale = d3.scaleLinear().range([0, width])
     const yScale = d3.scaleLinear().range([height, 0])
     const radiusScale = d3.scaleLinear().range([1, 30])
@@ -69,10 +133,10 @@
     const domainColumn = 'Men average annual salary ($)'
     const rangeColumn = 'Women average annual salary ($)'
     const radiusColumn = 'Pay gap as a percentage'
-      
+
     d3.csv('us_gender_pay_gap.csv', (error, data) => {
       if (error) console.error('hmmm....')
-      
+
       data.forEach((d) => {
         d[domainColumn] = +d[domainColumn]
         d[rangeColumn] = +d[rangeColumn]
@@ -85,7 +149,12 @@
       
       const ideal = svg.append('line')
         .style('stroke', 'black')
+        .attr('x1', () => xScale(17000))      
+        .attr('y1', () => yScale(17000))
+        .attr('x2', () => xScale(17000))
+        .attr('y2', () => yScale(17000))
         .style('opacity', 0.2)
+        .transition().duration(2000)
         .attr('x1', () => xScale(17000))      
         .attr('y1', () => yScale(17000))
         .attr('x2', () => xScale(92000))
@@ -105,29 +174,39 @@
         .append('span')
         .attr('class', 'tooltip')
         .style('position', 'absolute')
+        .style('left', '160px')
+        .style('top', '180px')
         .style('opacity', 0)
       
       const node = svg.selectAll('circle')
         .data(data)
         .enter().append('circle')
-        .attr('cx', d => xScale(d[domainColumn]))
+        
+      node.attr('cx', d => xScale(d[domainColumn]))
         .attr('cy', d => yScale(d[rangeColumn]))
-        .attr('r', d => radiusScale(d[radiusColumn]))
         .style('fill', d => colorScale(d.Category))
+        .attr('r', () => radiusScale(-20))
+        .transition().duration(2500)
+        .attr('r', d => radiusScale(d[radiusColumn]))
         .attr('class', 'node')
-        .on('mouseover', function(d) {
+      
+      node.on('mouseover', function(d) {
+          d3.selectAll('circle')
+            .style('opacity', .3)
           d3.select(this)
             .style('opacity', 1)
             .append('text')
           tooltip
-            .text(d.Occupation)
-            .style('opacity', 0.9)
-            .style('left', (d3.event.pageX) + 'px')
-            .style('top', (d3.event.pageY - 30) + 'px')
+            .html(`<b>${d.Occupation}</b><br />
+              <span class='percentage'>${d[radiusColumn]}%</span><br />
+              <span class='man'>$${d[domainColumn].toLocaleString()}</span>&nbsp;
+              <span class='woman'>$${d[rangeColumn].toLocaleString()}</span>
+            `)
+            .style('opacity', .9)          
         })
-        .on('mouseout', function(d) {
-          d3.select(this)
-            .style('opacity', 0.7)
+        .on('mouseout', (d) => {
+          d3.selectAll('circle')
+            .style('opacity', .7)
           tooltip
             .style('opacity', 0)
         })
@@ -165,7 +244,7 @@
         .text(d => d)
 
       legend.on('click', (type) => {
-        showAll.attr('opacity', 0.8)
+        showAll.attr('opacity', .8)
         d3.selectAll('circle')
           .classed('hidden', true)
           .classed('highlighted', false)
@@ -177,12 +256,12 @@
       legend.on('mouseover', (type) => {
         d3.selectAll('circle')
           .filter(d => d.Category !== type)
-          .style('opacity', 0.15)
+          .style('opacity', .15)
       })
       
       legend.on('mouseout', (type) => {
         d3.selectAll('circle')
-          .style('opacity', 0.7)
+          .style('opacity', .7)
       })
         
       const showAll = d3.select('svg')
