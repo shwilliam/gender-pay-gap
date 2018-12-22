@@ -179,12 +179,12 @@
         data.forEach((d) => {
           d[domainColumn] = +d[domainColumn]
           d[rangeColumn] = +d[rangeColumn]
-          d[radiusColumn] = +Math.abs(d[radiusColumn])  // differentiate negative diff
+          d[radiusColumn] = +d[radiusColumn]
         })
 
         xScale.domain(d3.extent(data, (d) => d[domainColumn])).nice()
         yScale.domain(d3.extent(data, (d) => d[rangeColumn])).nice()
-        radiusScale.domain(d3.extent(data, (d) => d[radiusColumn])).nice()
+        radiusScale.domain(d3.extent(data, (d) => Math.abs(d[radiusColumn]))).nice()
         
         const ideal = svg.append('line')
           .style('stroke', 'black')
@@ -259,7 +259,7 @@
           !tooltipFrozen && tooltip
             .classed('hold', false)
             .html(`<b>${d.Occupation}</b><br />
-              <span class='percentage'>${d[radiusColumn]}%</span>
+              <span class='percentage'>${Math.abs(d[radiusColumn])}%</span>
               ${d[radiusColumn] >= 0 ? 'less' : 'more'}<br />
               <span class='man'>$${d[domainColumn].toLocaleString()}</span>&nbsp;
               <span class='woman'>$${d[rangeColumn].toLocaleString()}</span>
@@ -289,7 +289,7 @@
               .classed('highlighted', true)
             tooltip
               .html(`<b>${node.Occupation}</b><br />
-                <span class='percentage'>${node[radiusColumn]}%</span>
+                <span class='percentage'>${Math.abs(node[radiusColumn])}%</span>
                 ${node[radiusColumn] >= 0 ? 'less' : 'more'}<br />
                 <span class='man'>$${node[domainColumn].toLocaleString()}</span>&nbsp;
                 <span class='woman'>$${node[rangeColumn].toLocaleString()}</span>
