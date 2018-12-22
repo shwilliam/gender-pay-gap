@@ -281,6 +281,9 @@
               .style('opacity', .5)
               .filter(d => d == node.Category)
               .style('opacity', 1)
+            showAll
+              .style('opacity', .8)
+              .style('pointer-events', 'all')
             d3.selectAll('circle')
               .classed('muted', true)
               .classed('highlighted', false)
@@ -361,7 +364,8 @@
             .style('pointer-events', 'none')
           d3.selectAll('circle')
             .classed('hidden', false)
-            .classed('highlighted', false)  
+            .classed('highlighted', false)
+            .classed('muted', false)
         })
       })
     }
