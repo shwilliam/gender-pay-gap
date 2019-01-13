@@ -102,7 +102,7 @@
       background: linear-gradient(to bottom,transparent 0,transparent 60%,lightpink 60%,lightpink 100%);
       background-image: linear-gradient(transparent 0px, transparent 60%, lightpink 60%, lightpink 100%);      
     }
-    span.percentage {
+    span.difference {
       font-size: 42px;
       line-height: 40px;
       color: #333;
@@ -155,7 +155,7 @@
 
       const domainColumn = 'Men average annual salary ($)'
       const rangeColumn = 'Women average annual salary ($)'
-      const radiusColumn = 'Pay gap as a percentage'
+      const radiusColumn = 'Pay gap ($)'
       const categories = [
         'Admin & organisation',
         'Care & education',
@@ -171,9 +171,15 @@
         if (error) console.error('hmmm....')
 
         const summaryPoints = []
+        const seenOccupations = []
         data = data.filter(entry => {
-          if (categories.indexOf(entry.Occupation) !== -1) summaryPoints.push(entry)
-          return categories.indexOf(entry.Occupation) === -1
+          if (categories.indexOf(entry.Occupation) !== -1) {
+            summaryPoints.push(entry)
+            return false
+          } else if (!seenOccupations.includes(entry.Occupation) && !categories.includes(entry.Occupation)) {
+            seenOccupations.push(entry.Occupation)
+            return true
+          }
         })
 
         data.forEach((d) => {
@@ -259,7 +265,7 @@
           !tooltipFrozen && tooltip
             .classed('hold', false)
             .html(`<b>${d.Occupation}</b><br />
-              <span class='percentage'>${Math.abs(d[radiusColumn])}%</span>
+              <span class='difference'>$${Math.abs(d[radiusColumn]).toLocaleString()}</span>
               ${d[radiusColumn] >= 0 ? 'less' : 'more'}<br />
               <span class='man'>$${d[domainColumn].toLocaleString()}</span>&nbsp;
               <span class='woman'>$${d[rangeColumn].toLocaleString()}</span>
@@ -292,7 +298,7 @@
               .classed('highlighted', true)
             tooltip
               .html(`<b>${node.Occupation}</b><br />
-                <span class='percentage'>${Math.abs(node[radiusColumn])}%</span>
+                <span class='difference'>$${Math.abs(node[radiusColumn]).toLocaleString()}</span>
                 ${node[radiusColumn] >= 0 ? 'less' : 'more'}<br />
                 <span class='man'>$${node[domainColumn].toLocaleString()}</span>&nbsp;
                 <span class='woman'>$${node[rangeColumn].toLocaleString()}</span>
